@@ -1,0 +1,5 @@
+#!/bin/bash
+[[ "$ARGS_TRACE" ]] && set -x
+set -eo pipefail
+
+value-of foreign-root.args | tr ',' '\n' | xargs -n1 -I{} printf -- "--{} " || true

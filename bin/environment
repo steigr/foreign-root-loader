@@ -1,0 +1,5 @@
+#!/bin/bash
+[[ "$ENVIRONMENT_TRACE" ]] && set -x
+set -eo pipefail
+
+value-of foreign-root.environment | tr ',' '\n' | xargs -n1 -I{} printf -- "--env={} " || true

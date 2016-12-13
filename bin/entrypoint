@@ -1,0 +1,5 @@
+#!/bin/bash
+[[ "$ENTRYPOINT_TRACE" ]] && set -x
+set -eo pipefail
+
+exec printf -- "--entrypoint=%s " "$(value-of foreign-root.entrypoint | xargs | head -1 || echo "/sbin/init")"

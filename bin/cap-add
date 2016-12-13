@@ -1,0 +1,5 @@
+#!/bin/bash
+[[ "$CAP_TRACE" ]] && set -x
+set -eo pipefail
+
+value-of foreign-root.capabilities | tr ',' '\n' | tr '[:lower:]' '[:upper:]' | xargs -r -n1 -I{} printf -- "--cap-add={} "

@@ -1,0 +1,32 @@
+#!/bin/bash
+[[ "$UNLISTEN_TRACE" ]] && set -x
+set -eo pipefail
+
+export MAXIMUM_SLEEP=${1:-60}
+export CONTAINER_ID=$(faketty docker run --log-driver=none --detach=true --net=host --cap-add=NET_ADMIN --volume=/bin:/bin:ro --volume=/sbin:/sbin:ro --volume=/lib:/lib:ro --volume=/lib64:/lib64:ro --volume=/usr:/usr:ro --volume=/etc:/etc:ro --volume=/var:/var:ro --volume=/run:/run --volume=/dev/log:/dev/log busybox sleep $MAXIMUM_SLEEP | xargs )
+until [[ $(docker inspect --format='{{.State.Pid}}' $CONTAINER_ID 2>/dev/null </dev/null) -gt 0 ]]; do sleep .1; done
+
+_dst() { ip r g 1 | awk '{print $7}'; }
+_dgw() { ip r g 1 | awk '{print $3}'; }
+_docker() { docker exec "$CONTAINER_ID" "$@"; }
+_docker_bridge() { _docker ip -4 -o a s | grep $(_dgw) | xargs | awk '{print $2}'; }
+_iptables() { _docker iptables "$@"; }
+_iptables_save() { _docker iptables-save "$@"; }
+_rules_in_table() {  _iptables_save -t "$1" | grep "$2" || true; }
+
+service=$(value-of com.docker.swarm.service.name)
+
+for port in $(value-of foreign-root.publish | tr ',' '\n'); do
+  tag="dkr-$(echo $service $port | md5sum | awk '{print $1}')"
+  dst="$(_dst)"
+  bridge="$(_docker_bridge)"
+  # remove existing rules ( from former instances )
+  _rules_in_table nat "$tag" | sed -e 's/-A /-D /' | while read -r rule; do
+    echo "Clear Port-Forwarding in NAT with $tag: $rule"
+    _iptables -t nat $rule
+  done || true
+  _rules_in_table filter "$tag" | sed -e 's/-A /-D /' | while read -r rule; do
+    echo "Clear Port-Forwarding in FILTER with $tag: $rule"
+    _iptables -t filter $rule
+  done || true
+done || true

@@ -1,0 +1,19 @@
+#!/bin/bash
+[[ "$VOLUMES_TRACE" ]] && set -x
+set -eo pipefail
+
+_directories_in_root() { docker run --log-driver=none --rm --net=none --volume=$1:$1 --workdir=$1 busybox ls -A; }
+
+root=$(value-of foreign-root.folder)
+
+for dir in $(_directories_in_root "$root" | grep -v -e dev -e sys -e proc -e run); do
+  printf -- "--volume=$root/$dir:/$dir "
+done
+
+for volume in $(value-of foreign-root.volumes | tr ',' '\n'); do
+  printf -- "--volume=$volume "
+done
+
+for tmpfs in $(value-of foreign-root.tmpfs | tr ',' '\n'); do
+  printf -- "--tmpfs=$tmpfs "
+done

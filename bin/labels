@@ -1,0 +1,5 @@
+#!/bin/bash
+[[ "$LABELS_TRACE" ]] && set -x
+set -eo pipefail
+
+exec docker inspect --format='{{(json .Config.Labels)}}' $(container id)

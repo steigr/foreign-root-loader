@@ -1,0 +1,2 @@
+#!/bin/bash
+exec script -qfc "$(printf -- "%q " "$@")"

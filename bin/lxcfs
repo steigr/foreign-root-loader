@@ -1,0 +1,16 @@
+#!/bin/bash
+[[ "$LXCFS_TRACE" ]] && set -x
+set -eo pipefail
+
+_lxcfs_mounts(){ 
+  cat <<'_lxcfs_mounts'
+/proc/cpuinfo
+/proc/meminfo
+/proc/diskstats
+/proc/stat
+_lxcfs_mounts
+}
+
+LXCFS=$(value-of foreign-root.lxcfs)
+
+[[ "$LXCFS" ]] && _lxcfs_mounts | xargs -n1 -r -I{} printf -- "--volume=$LXCFS{}:{}:ro "

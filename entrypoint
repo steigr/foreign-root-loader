@@ -1,0 +1,51 @@
+#!/bin/bash
+
+pidof tini 2>/dev/null >/dev/null </dev/null || exec tini -- "$0" "$@"
+
+[[ "$TRACE" ]] && set -x
+set -eo pipefail
+
+vars() {
+  [[ ! -S /run/docker.sock ]] || export DOCKER_HOST=unix:///run/docker.sock
+  export CONTAINER_NET=container:$(container id)
+  export CONTAINER_NAME=$(container name).app
+  export CONTAINER_VOLUMES=$(volumes)
+  export CONTAINER_LXCFS=$(lxcfs)
+  export CONTAINER_CAP_ADD=$(cap-add)
+  export CONTAINER_ENVIRONMENT=$(environment)
+  export CONTAINER_ENTRYPOINT=$(entrypoint)
+  export CONTAINER_EXTRA_ARGS=$(args)
+  export CONTAINER_STOP_SIGNAL=$(stop-signal)
+  export CONTAINER_LIMITS=$(limits)
+  export CONTAINER_IMAGE=$(container image)
+}
+
+_trap_handler() {
+  ( sleep 9.5 && docker rm -f $CONTAINER_ID ) &
+  echo "Shutdown Application Container on $1"
+  docker exec "$CONTAINER_ID" shutdown -h now
+  echo "Remove Port-Forwardings"
+  unlisten 8
+  sleep 30
+}
+
+update_hostname() {
+  value-of foreign-root.hostname > /etc/hostname
+}
+
+main() {
+  unlisten
+  trap '_trap_handler exit' EXIT
+  trap '_trap_handler quit' SIGQUIT
+  trap '_trap_handler term' SIGTERM
+  trap '_trap_handler int' SIGINT
+  listen
+  update_hostname
+  faketty docker run --detach --net=$CONTAINER_NET --name=$CONTAINER_NAME $CONTAINER_VOLUMES $CONTAINER_LXCFS $CONTAINER_CAP_ADD $CONTAINER_ENVIRONMENT $CONTAINER_ENTRYPOINT $CONTAINER_EXTRA_ARGS $CONTAINER_STOP_SIGNAL $CONTAINER_LIMITS $CONTAINER_IMAGE
+  export CONTAINER_ID=$(docker inspect --format='{{.Id}}' $CONTAINER_NAME)
+  docker logs -f $CONTAINER_NAME &
+  wait $!
+}
+
+vars
+main "$@"
