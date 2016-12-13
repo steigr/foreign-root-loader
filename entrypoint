@@ -30,7 +30,7 @@ _trap_handler() {
 }
 
 update_hostname() {
-  value-of foreign-root.hostname > /etc/hostname
+  value-of foreign-root.hostname | tee /etc/hostname | xargs -n1 printf '%s %s\n' $(hostname -i | cut -f1 -d' ')| tee -a /etc/hosts
 }
 
 main() {
