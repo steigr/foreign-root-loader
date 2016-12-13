@@ -30,3 +30,5 @@ for port in $(value-of foreign-root.publish | tr ',' '\n'); do
     _iptables -t filter $rule
   done || true
 done || true
+
+docker rm -f "$CONTAINER_ID"

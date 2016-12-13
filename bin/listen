@@ -27,3 +27,5 @@ for port in $(value-of foreign-root.publish | tr ',' '\n'); do
   _add_rule filter "$tag" -I DOCKER -p tcp -m tcp --dport $port -j ACCEPT
   _add_rule filter "$tag" -I DOCKER -p tcp -m state --state RELATED,ESTABLISHED -m tcp --sport $port -j ACCEPT
 done
+
+docker rm -f "$CONTAINER_ID"
