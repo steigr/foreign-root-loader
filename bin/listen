@@ -1,5 +1,6 @@
 #!/bin/bash
-[[ "$LISTEN_TRACE" ]] && set -x
+[[ -z "$TRACE$TRACE_LISTEN" ]] || set -x
+
 set -eo pipefail
 
 export MAXIMUM_SLEEP=${1:-60}
@@ -13,9 +14,9 @@ _docker_bridge() { _docker ip -4 -o a s | grep $(_dgw) | xargs | awk '{print $2}
 _iptables() { _docker iptables "$@"; }
 _add_rule() { table=$1; tag=$2; shift 2; _iptables -t "$table" -m comment --comment "$tag" "$@"; }
 
-service=$(value-of com.docker.swarm.service.name)
+service=$(labels | jq -r ".\"com.docker.swarm.service.name\"")
 
-for port in $(value-of foreign-root.publish | tr ',' '\n'); do
+for port in $(value-of publish | tr ',' '\n'); do
   tag="dkr-$(echo $service $port | md5sum | awk '{print $1}')"
   dst="$(_dst)"
   bridge="$(_docker_bridge)"

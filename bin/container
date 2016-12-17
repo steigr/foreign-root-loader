@@ -1,10 +1,22 @@
 #!/bin/bash
-[[ "$CONTAINER_TRACE" ]] && set -x
+[[ -z "$TRACE$TRACE_CONTAINER" ]] || set -x
 set -eo pipefail
 
-_id()    { cat /proc/1/cgroup  | sort -n | tail -1  | xargs -r basename ; }
-_name()  { exec docker inspect --format='{{.Name}}' $(_id); }
-_image() { exec docker inspect --format='{{.Config.Image}}' $(_id) ; }
+_id()    {
+  cat /proc/1/cgroup \
+  | sort -n\
+  | tail -1 \
+  | xargs -r basename
+}
+_name()  {
+  exec docker inspect --format='{{.Name}}' $(_id)
+}
+_image() {
+  image=$(value-of image)
+  image="${image:-$(exec docker inspect --format='{{.Config.Image}}' $(_id))}"
+  docker pull $image >&2
+  exec printf -- "$image"
+}
 cmd="$1"; [[ $# -gt 0 ]] && shift;
 case "$cmd" in
   id|image|name) "_$cmd" "$@";;    

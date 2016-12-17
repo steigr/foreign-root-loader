@@ -1,5 +1,3 @@
 #!/bin/bash
-[[ "$ENVIRONMENT_TRACE" ]] && set -x
-set -eo pipefail
-
-value-of foreign-root.environment | tr ',' '\n' | xargs -n1 -I{} printf -- "--env={} " || true
+[[ -z "$TRACE$TRACE_ENVIRONMENT" ]] || set -x
+labels | jq -r 'to_entries | map (.key + "=" +  .value) | .[]' | grep "^real\.env\." | cut -f3- -d. | xargs -n1 -I{} printf -- "--env={} "

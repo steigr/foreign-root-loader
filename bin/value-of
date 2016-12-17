@@ -1,5 +1,3 @@
 #!/bin/bash
-[[ "$VALUE_OF_TRACE" ]] && set -x
-set -eo pipefail
-
-labels | jq -r ".\"$1\"" | grep -v ^null$
+[[ -z "$TRACE$TRACE_VALUE_OF" ]] || set -x
+labels | jq -r ".\"$prefix.$1\"" | grep -v ^null$ || true

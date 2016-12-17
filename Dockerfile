@@ -23,5 +23,6 @@ ADD  docker /bin/docker
 
 ADD  bin/   /bin/
 
-ENTRYPOINT ["foreign-root-loader"]
-ADD  entrypoint /bin/foreign-root-loader
+ENV  prefix real
+ENTRYPOINT ["loader"]
+ADD  entrypoint /bin/loader

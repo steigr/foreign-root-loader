@@ -18,6 +18,7 @@ vars() {
   export CONTAINER_STOP_SIGNAL=$(stop-signal)
   export CONTAINER_LIMITS=$(limits)
   export CONTAINER_IMAGE=$(container image)
+  export CONTAINER_CMD=$(cmd)
 }
 
 _trap_handler() {
@@ -30,7 +31,7 @@ _trap_handler() {
 }
 
 update_hostname() {
-  value-of foreign-root.hostname | tee /etc/hostname | xargs -n1 printf '%s %s\n' $(hostname -i | cut -f1 -d' ')| tee -a /etc/hosts
+  value-of hostname | tee /etc/hostname | xargs -n1 printf -- '%s %s\n' $(hostname -i | cut -f1 -d' ')| tee -a /etc/hosts
 }
 
 main() {
@@ -41,10 +42,10 @@ main() {
   trap '_trap_handler int' SIGINT
   listen
   update_hostname
-  [[ "$TRACE" ]] || echo docker run --detach --net=$CONTAINER_NET --name=$CONTAINER_NAME $CONTAINER_VOLUMES $CONTAINER_LXCFS $CONTAINER_CAP_ADD $CONTAINER_ENVIRONMENT $CONTAINER_ENTRYPOINT $CONTAINER_EXTRA_ARGS $CONTAINER_STOP_SIGNAL $CONTAINER_LIMITS $CONTAINER_IMAGE
-  faketty docker run --detach --net=$CONTAINER_NET --name=$CONTAINER_NAME $CONTAINER_VOLUMES $CONTAINER_LXCFS $CONTAINER_CAP_ADD $CONTAINER_ENVIRONMENT $CONTAINER_ENTRYPOINT $CONTAINER_EXTRA_ARGS $CONTAINER_STOP_SIGNAL $CONTAINER_LIMITS $CONTAINER_IMAGE
+  [[ "$TRACE" ]] || echo docker run --detach --net=$CONTAINER_NET --name=$CONTAINER_NAME $CONTAINER_VOLUMES $CONTAINER_LXCFS $CONTAINER_CAP_ADD $CONTAINER_ENVIRONMENT $CONTAINER_ENTRYPOINT $CONTAINER_EXTRA_ARGS $CONTAINER_STOP_SIGNAL $CONTAINER_LIMITS $CONTAINER_IMAGE $CONTAINER_CMD
+  faketty docker run --detach --net=$CONTAINER_NET --name=$CONTAINER_NAME $CONTAINER_VOLUMES $CONTAINER_LXCFS $CONTAINER_CAP_ADD $CONTAINER_ENVIRONMENT $CONTAINER_ENTRYPOINT $CONTAINER_EXTRA_ARGS $CONTAINER_STOP_SIGNAL $CONTAINER_LIMITS $CONTAINER_IMAGE $CONTAINER_CMD
   export CONTAINER_ID=$(docker inspect --format='{{.Id}}' $CONTAINER_NAME)
-  pause &
+  docker logs -f $CONTAINER_ID </dev/null >/dev/null 2>/dev/null &
   wait $!
 }
 

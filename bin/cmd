@@ -1,0 +1,4 @@
+#!/bin/bash
+[[ -z "$TRACE$TRACE_CMD" ]] || set -x
+set -eo pipefail
+value-of cmd || true

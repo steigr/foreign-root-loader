@@ -1,5 +1,5 @@
 #!/bin/bash
-[[ "$STOP_SIGNAL_TRACE" ]] && set -x
+[[ -z "$TRACE$TRACE_STOP_SIGNAL" ]] || set -x
 set -eo pipefail
-
-exec printf -- "--stop-signal=%s " "$(value-of foreign-root.stop-signal)"
+[[ "$(value-of stop-signal)" ]] || exit 0
+exec printf -- "--stop-signal=%s " "$(value-of stop-signal)"

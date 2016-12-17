@@ -1,7 +1,6 @@
 #!/bin/bash
-[[ "$LIMITS_TRACE" ]] && set -x
+[[ -z "$TRACE$TRACE_LIMITS" ]] || set -x
 set -eo pipefail
-
 for flag in cpuset-cpus memory memory-swap; do
-  value-of foreign-root.$flag | xargs -r -n1 printf -- "--$flag=%s "
+  value-of $flag | xargs -r -n1 printf -- "--$flag=%s "
 done
